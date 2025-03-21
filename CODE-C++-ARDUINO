@@ -1,0 +1,32 @@
+#include <VirtualWire.h>
+
+const int pinTrasmettitore = 3;  // Pin per il trasmettitore
+const int pinRicevitore = 2;      // Pin per il ricevitore
+
+void setup() {
+  Serial.begin(9600);          // Avvia la comunicazione seriale
+  vw_setup(2000);              // Imposta la velocità di trasmissione (2000 bps)
+  vw_set_tx_pin(pinTrasmettitore);  // Imposta il pin del trasmettitore
+  vw_set_rx_pin(pinRicevitore);    // Imposta il pin del ricevitore
+  vw_rx_start();               // Avvia la ricezione dei messaggi
+}
+
+void loop() {
+  // Parte 1: Trasmissione del messaggio
+  String messaggio = "Ciao Arduino!";  // Messaggio da inviare
+  Serial.println("Invio del messaggio...");
+  vw_send((uint8_t*)messaggio.c_str(), messaggio.length());  // Invia il messaggio
+  vw_wait_tx();  // Aspetta che il messaggio venga trasmesso completamente
+  Serial.println("Messaggio inviato!");
+  delay(2000);  // Invia ogni 2 secondi
+
+  // Parte 2: Ricezione dei messaggi
+  uint8_t messaggioRicevuto[100];  // Buffer per il messaggio ricevuto
+  uint8_t messaggioLunghezza = sizeof(messaggioRicevuto);
+  
+  if (vw_get_message(messaggioRicevuto, &messaggioLunghezza)) {
+    messaggioRicevuto[messaggioLunghezza] = '\0';  // Termina la stringa ricevuta
+    Serial.print("Messaggio ricevuto: ");
+    Serial.println((char*)messaggioRicevuto);  // Stampa il messaggio ricevuto sul monitor seriale
+  }
+}
