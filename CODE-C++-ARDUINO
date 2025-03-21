@@ -1,24 +1,38 @@
 #include <VirtualWire.h>
+#include <LiquidCrystal.h>
 
+// Configurazione dei pin
 const int pinTrasmettitore = 3;  // Pin per il trasmettitore
 const int pinRicevitore = 2;      // Pin per il ricevitore
 
+// Impostazione per l'LCD (pin di connessione al display)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
 void setup() {
-  Serial.begin(9600);          // Avvia la comunicazione seriale
+  // Inizializzazione della comunicazione seriale e dell'LCD
+  Serial.begin(9600);          
+  lcd.begin(16, 2);            // Imposta il display LCD (16 colonne x 2 righe)
+  lcd.print("Inizializzazione..."); // Messaggio di avvio
+  delay(1000);  // Pausa di 1 secondo per vedere il messaggio iniziale
+
+  // Configurazione di VirtualWire per la comunicazione RF
   vw_setup(2000);              // Imposta la velocità di trasmissione (2000 bps)
   vw_set_tx_pin(pinTrasmettitore);  // Imposta il pin del trasmettitore
   vw_set_rx_pin(pinRicevitore);    // Imposta il pin del ricevitore
-  vw_rx_start();               // Avvia la ricezione dei messaggi
+  vw_rx_start();               // Inizia la ricezione dei messaggi
 }
 
 void loop() {
   // Parte 1: Trasmissione del messaggio
   String messaggio = "Ciao Arduino!";  // Messaggio da inviare
   Serial.println("Invio del messaggio...");
+  lcd.clear();                       // Pulisce lo schermo LCD
+  lcd.setCursor(0, 0);               // Imposta il cursore in alto a sinistra
+  lcd.print("Invio messaggio...");
   vw_send((uint8_t*)messaggio.c_str(), messaggio.length());  // Invia il messaggio
   vw_wait_tx();  // Aspetta che il messaggio venga trasmesso completamente
   Serial.println("Messaggio inviato!");
-  delay(2000);  // Invia ogni 2 secondi
+  delay(2000);  // Pausa di 2 secondi prima del prossimo invio
 
   // Parte 2: Ricezione dei messaggi
   uint8_t messaggioRicevuto[100];  // Buffer per il messaggio ricevuto
@@ -27,6 +41,13 @@ void loop() {
   if (vw_get_message(messaggioRicevuto, &messaggioLunghezza)) {
     messaggioRicevuto[messaggioLunghezza] = '\0';  // Termina la stringa ricevuta
     Serial.print("Messaggio ricevuto: ");
-    Serial.println((char*)messaggioRicevuto);  // Stampa il messaggio ricevuto sul monitor seriale
+    Serial.println((char*)messaggioRicevuto);  // Stampa il messaggio sulla seriale
+    
+    // Visualizza il messaggio ricevuto sul display LCD
+    lcd.clear();                   // Pulisce lo schermo LCD
+    lcd.setCursor(0, 0);           // Imposta il cursore in alto a sinistra
+    lcd.print("Messaggio ricevuto:");
+    lcd.setCursor(0, 1);           // Imposta il cursore sulla seconda riga
+    lcd.print((char*)messaggioRicevuto);  // Visualizza il messaggio ricevuto
   }
 }
